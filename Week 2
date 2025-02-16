@@ -1,0 +1,67 @@
+import numpy as np
+
+def sigmoid(z):
+    return 1 / (1 + np.exp(-z))
+
+def sigmoid_derivative(a):
+    return a * (1 - a)
+
+def initialize_weights(n_input, n_hidden, n_output):
+    w1 = np.random.randn(n_hidden, n_input) * 0.01
+    b1 = np.zeros((n_hidden, 1))
+    w2 = np.random.randn(n_output, n_hidden) * 0.01
+    b2 = np.zeros((n_output, 1))
+    return w1, b1, w2, b2
+
+def forward_propagation(x, w1, b1, w2, b2):
+    z1 = np.dot(w1, x) + b1
+    a1 = sigmoid(z1)
+    z2 = np.dot(w2, a1) + b2
+    a2 = sigmoid(z2)
+    return z1, a1, z2, a2
+
+def compute_cost(a2, y):
+    m = y.shape[1]
+    cost = -np.sum(y * np.log(a2) + (1 - y) * np.log(1 - a2)) / m
+    return cost
+
+def backward_propagation(x, y, w1, b1, w2, b2, z1, a1, a2):
+    m = y.shape[1]
+    dz2 = a2 - y
+    dw2 = np.dot(dz2, a1.T) / m
+    db2 = np.sum(dz2, axis=1, keepdims=True) / m
+    dz1 = np.dot(w2.T, dz2) * sigmoid_derivative(a1)
+    dw1 = np.dot(dz1, x.T) / m
+    db1 = np.sum(dz1, axis=1, keepdims=True) / m
+    return dw1, db1, dw2, db2
+
+def update_parameters(w1, b1, w2, b2, dw1, db1, dw2, db2, learning_rate):
+    w1 -= learning_rate * dw1
+    b1 -= learning_rate * db1
+    w2 -= learning_rate * dw2
+    b2 -= learning_rate * db2
+    return w1, b1, w2, b2
+
+def train_nn(x, y, n_hidden, epochs, learning_rate):
+    n_input = x.shape[0]
+    n_output = y.shape[0]
+    w1, b1, w2, b2 = initialize_weights(n_input, n_hidden, n_output)
+    for _ in range(epochs):
+        z1, a1, z2, a2 = forward_propagation(x, w1, b1, w2, b2)
+        dw1, db1, dw2, db2 = backward_propagation(x, y, w1, b1, w2, b2, z1, a1, a2)
+        w1, b1, w2, b2 = update_parameters(w1, b1, w2, b2, dw1, db1, dw2, db2, learning_rate)
+    return w1, b1, w2, b2
+
+def predict(x, w1, b1, w2, b2):
+    _, _, _, a2 = forward_propagation(x, w1, b1, w2, b2)
+    return (a2 > 0.5).astype(int)
+
+x_and = np.array([[0, 0, 1, 1], [0, 1, 0, 1]])
+y_and = np.array([[0, 0, 0, 1]])
+w1, b1, w2, b2 = train_nn(x_and, y_and, n_hidden=2, epochs=10000, learning_rate=0.1)
+print(predict(x_and, w1, b1, w2, b2))
+
+x_xor = np.array([[0, 0, 1, 1], [0, 1, 0, 1]])
+y_xor = np.array([[0, 1, 1, 0]])
+w1, b1, w2, b2 = train_nn(x_xor, y_xor, n_hidden=2, epochs=10000, learning_rate=0.1)
+print(predict(x_xor, w1, b1, w2, b2))
